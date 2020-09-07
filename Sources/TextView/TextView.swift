@@ -11,7 +11,7 @@ public struct TextView: View {
 			public init(_ parent: Representable) {
 				self.parent = parent
 			}
-			
+			 
 			private func setIsEditing(to value: Bool) {
 				DispatchQueue.main.async {
 					self.parent.isEditing = value
@@ -24,6 +24,7 @@ public struct TextView: View {
 			
 			public func textViewDidChange(_ textView: UITextView) {
 				parent.text = textView.text
+                parent.recalculateHeight(view: textView, result: parent.$height)
 			}
 			
 			public func textViewDidBeginEditing(_: UITextView) {
@@ -55,6 +56,8 @@ public struct TextView: View {
 		private let isUserInteractionEnabled: Bool
 		private let shouldWaitUntilCommit: Bool
 		private let shouldChange: ShouldChangeHandler?
+        
+        @Binding private var height: CGFloat
 		
 		public init(
 			text: Binding<String>,
@@ -75,7 +78,8 @@ public struct TextView: View {
 			isScrollingEnabled: Bool,
 			isUserInteractionEnabled: Bool,
 			shouldWaitUntilCommit: Bool,
-			shouldChange: ShouldChangeHandler? = nil
+			shouldChange: ShouldChangeHandler? = nil,
+            height: Binding<CGFloat>
 		) {
 			_text = text
 			_isEditing = isEditing
@@ -97,6 +101,8 @@ public struct TextView: View {
 			self.isUserInteractionEnabled = isUserInteractionEnabled
 			self.shouldWaitUntilCommit = shouldWaitUntilCommit
 			self.shouldChange = shouldChange
+            
+            _height = height
 		}
 		
 		public func makeCoordinator() -> Coordinator {
@@ -122,7 +128,7 @@ public struct TextView: View {
 					)
 					: oldSelectedRange
 			}
-			
+            
 			textView.textAlignment = textAlignment
 			textView.font = font
 			textView.textColor = textColor
@@ -143,14 +149,29 @@ public struct TextView: View {
 				bottom: textVerticalPadding,
 				right: textHorizontalPadding
 			)
-			
-			DispatchQueue.main.async {
+            
+            recalculateHeight(view: textView, result: self.$height)
+            			
+            DispatchQueue.main.async {
 				_ = self.isEditing
 					? textView.becomeFirstResponder()
 					: textView.resignFirstResponder()
 			}
 		}
+        
+        // Source: https://stackoverflow.com/questions/56471973/how-do-i-create-a-multiline-textfield-in-swiftui
+        
+        fileprivate func recalculateHeight(view: UIView, result: Binding<CGFloat>) {
+            let newHeight = max(view.sizeThatFits(CGSize(width: view.frame.size.width, height: CGFloat.greatestFiniteMagnitude)).height, 50)
+            if result.wrappedValue != newHeight {
+                DispatchQueue.main.async {
+                    result.wrappedValue = newHeight // !! must be called asynchronously
+                }
+            }
+        }
 	}
+    
+    
 	
 	public typealias TextAlignment = NSTextAlignment
 	public typealias ContentType = UITextContentType
@@ -185,6 +206,8 @@ public struct TextView: View {
 	private let isUserInteractionEnabled: Bool
 	private let shouldWaitUntilCommit: Bool
 	private let shouldChange: ShouldChangeHandler?
+    
+    @State private var height: CGFloat = 50
 	
 	public init(
 		text: Binding<String>,
@@ -210,7 +233,8 @@ public struct TextView: View {
 		isScrollingEnabled: Bool = true,
 		isUserInteractionEnabled: Bool = true,
 		shouldWaitUntilCommit: Bool = true,
-		shouldChange: ShouldChangeHandler? = nil
+		shouldChange: ShouldChangeHandler? = nil,
+        height: CGFloat = 50
 	) {
 		_text = text
 		_isEditing = isEditing
@@ -237,6 +261,7 @@ public struct TextView: View {
 		self.isUserInteractionEnabled = isUserInteractionEnabled
 		self.shouldWaitUntilCommit = shouldWaitUntilCommit
 		self.shouldChange = shouldChange
+        self.height = height
 	}
 	
 	private var _placeholder: String? {
@@ -246,7 +271,7 @@ public struct TextView: View {
 	private var representable: Representable {
 		.init(
 			text: $text,
-			isEditing: $isEditing,
+            isEditing: $isEditing,
 			textAlignment: textAlignment,
 			textHorizontalPadding: textHorizontalPadding,
 			textVerticalPadding: textVerticalPadding,
@@ -263,7 +288,8 @@ public struct TextView: View {
 			isScrollingEnabled: isScrollingEnabled,
 			isUserInteractionEnabled: isUserInteractionEnabled,
 			shouldWaitUntilCommit: shouldWaitUntilCommit,
-			shouldChange: shouldChange
+			shouldChange: shouldChange,
+            height: $height
 		)
 	}
 	
@@ -271,17 +297,24 @@ public struct TextView: View {
 		GeometryReader { geometry in
 			ZStack {
 				self.representable
+                    .frame(minWidth: geometry.size.width,
+                           maxWidth: geometry.size.width,
+                           minHeight: self.height,
+                           maxHeight: self.height)
+                
 				self._placeholder.map { placeholder in
 					Text(placeholder)
 						.font(.init(self.font))
 						.foregroundColor(self.placeholderColor)
 						.padding(.horizontal, self.placeholderHorizontalPadding)
 						.padding(.vertical, self.placeholderVerticalPadding)
-						.frame(
-							width: geometry.size.width,
-							height: geometry.size.height,
-							alignment: self.placeholderAlignment
-						)
+                        .frame(
+                            minWidth: geometry.size.width,
+                            maxWidth: geometry.size.width,
+                            minHeight: self.height,
+                            maxHeight: self.height,
+                            alignment: self.placeholderAlignment
+                        )
 						.onTapGesture {
 							self.isEditing = true
 						}
@@ -292,3 +325,31 @@ public struct TextView: View {
 }
 
 #endif
+
+
+struct FeedbackInput: View {
+    @Binding var feedback: String
+    var placeholder: String
+    @Binding var active: Bool
+    
+    
+    
+    var body: some View {
+        TextView(text: self.$feedback,
+                 isEditing: self.$active,
+                 placeholder: self.placeholder,
+                 font: UIFont(name: "Nunito-Regular", size: 16)!,
+                 backgroundColor: UIColor.gray)
+            .onTapGesture { self.active.toggle() }
+        
+    }
+}
+
+struct FeedbackInput_Previews: PreviewProvider {
+    @State static var feedback = "Super long multiline input font that should wrap when it gets to the edge of the page and if it doesn't then something is wrong"
+    @State static var active = false
+    
+    static var previews: some View {
+        FeedbackInput(feedback: $feedback, placeholder: "How can we improve?", active: $active)
+    }
+}
