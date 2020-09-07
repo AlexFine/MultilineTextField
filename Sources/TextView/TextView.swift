@@ -56,6 +56,7 @@ public struct TextView: View {
 		private let isUserInteractionEnabled: Bool
 		private let shouldWaitUntilCommit: Bool
 		private let shouldChange: ShouldChangeHandler?
+        private let minHeight: CGFloat
         
         @Binding private var height: CGFloat
 		
@@ -79,6 +80,7 @@ public struct TextView: View {
 			isUserInteractionEnabled: Bool,
 			shouldWaitUntilCommit: Bool,
 			shouldChange: ShouldChangeHandler? = nil,
+            minHeight: CGFloat,
             height: Binding<CGFloat>
 		) {
 			_text = text
@@ -101,6 +103,7 @@ public struct TextView: View {
 			self.isUserInteractionEnabled = isUserInteractionEnabled
 			self.shouldWaitUntilCommit = shouldWaitUntilCommit
 			self.shouldChange = shouldChange
+            self.minHeight = minHeight
             
             _height = height
 		}
@@ -162,7 +165,8 @@ public struct TextView: View {
         // Source: https://stackoverflow.com/questions/56471973/how-do-i-create-a-multiline-textfield-in-swiftui
         
         fileprivate func recalculateHeight(view: UIView, result: Binding<CGFloat>) {
-            let newHeight = max(view.sizeThatFits(CGSize(width: view.frame.size.width, height: CGFloat.greatestFiniteMagnitude)).height, 50)
+            print("Current height: \(height)")
+            let newHeight = max(view.sizeThatFits(CGSize(width: view.frame.size.width, height: CGFloat.greatestFiniteMagnitude)).height, minHeight)
             if result.wrappedValue != newHeight {
                 DispatchQueue.main.async {
                     result.wrappedValue = newHeight // !! must be called asynchronously
@@ -206,7 +210,7 @@ public struct TextView: View {
 	private let isUserInteractionEnabled: Bool
 	private let shouldWaitUntilCommit: Bool
 	private let shouldChange: ShouldChangeHandler?
-    
+    private let minHeight: CGFloat
     @State private var height: CGFloat = 50
 	
 	public init(
@@ -234,7 +238,7 @@ public struct TextView: View {
 		isUserInteractionEnabled: Bool = true,
 		shouldWaitUntilCommit: Bool = true,
 		shouldChange: ShouldChangeHandler? = nil,
-        height: CGFloat = 50
+        minHeight: CGFloat = 50
 	) {
 		_text = text
 		_isEditing = isEditing
@@ -261,7 +265,10 @@ public struct TextView: View {
 		self.isUserInteractionEnabled = isUserInteractionEnabled
 		self.shouldWaitUntilCommit = shouldWaitUntilCommit
 		self.shouldChange = shouldChange
-        self.height = height
+        self.minHeight = minHeight
+        self.height = 1000
+        print("We set height to: \(minHeight)")
+        print("Height at initialization: \(self.height)")
 	}
 	
 	private var _placeholder: String? {
@@ -289,6 +296,7 @@ public struct TextView: View {
 			isUserInteractionEnabled: isUserInteractionEnabled,
 			shouldWaitUntilCommit: shouldWaitUntilCommit,
 			shouldChange: shouldChange,
+            minHeight: minHeight,
             height: $height
 		)
 	}
@@ -339,7 +347,8 @@ struct FeedbackInput: View {
                  isEditing: self.$active,
                  placeholder: self.placeholder,
                  font: UIFont(name: "Nunito-Regular", size: 16)!,
-                 backgroundColor: UIColor.gray)
+                 backgroundColor: UIColor.gray,
+                 minHeight: 100)
             .onTapGesture { self.active.toggle() }
         
     }
