@@ -3,22 +3,22 @@
 import PackageDescription
 
 let package = Package(
-	name: "TextView",
+	name: "MultilineTextField",
 	platforms: [
 		.iOS(.v13),
 		.tvOS(.v13)
 	],
 	products: [
 		.library(
-			name: "TextView",
-			targets: ["TextView"]
+			name: "MultilineTextField",
+			targets: ["MultilineTextField"]
 		)
 	],
 	targets: [
-		.target(name: "TextView"),
+		.target(name: "MultilineTextField"),
 		.testTarget(
-			name: "TextViewTests",
-			dependencies: ["TextView"]
+			name: "MultilineTextFieldTests",
+			dependencies: ["MultilineTextField"]
 		)
 	]
 )

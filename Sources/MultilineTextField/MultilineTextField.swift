@@ -3,7 +3,7 @@
 import SwiftUI
 
 @available(iOS 13.0, *)
-public struct TextView: View {
+public struct MultilineTextField: View {
 	public struct Representable: UIViewRepresentable {
 		public final class Coordinator: NSObject, UITextViewDelegate {
 			private let parent: Representable

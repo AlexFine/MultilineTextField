@@ -1,4 +1,4 @@
 import XCTest
-import TextViewTests
+import MultilineTextFieldTests
 
-XCTMain([TextViewTests.allTests()])
+XCTMain([MultilineTextFieldTests.allTests()])

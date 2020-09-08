@@ -2,7 +2,7 @@
 
 import XCTest
 
-final class TextViewTests: XCTestCase {
+final class MultilineTextFieldTests: XCTestCase {
 	static let allTests = [
 		("testExample", testExample)
 	]
