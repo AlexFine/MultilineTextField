@@ -56,6 +56,7 @@ public struct TextView: View {
 		private let isUserInteractionEnabled: Bool
 		private let shouldWaitUntilCommit: Bool
 		private let shouldChange: ShouldChangeHandler?
+        private let hasBorder: Bool
         private let minHeight: CGFloat
         
         @Binding private var height: CGFloat
@@ -80,6 +81,7 @@ public struct TextView: View {
 			isUserInteractionEnabled: Bool,
 			shouldWaitUntilCommit: Bool,
 			shouldChange: ShouldChangeHandler? = nil,
+            hasBorder: Bool,
             minHeight: CGFloat,
             height: Binding<CGFloat>
 		) {
@@ -103,6 +105,7 @@ public struct TextView: View {
 			self.isUserInteractionEnabled = isUserInteractionEnabled
 			self.shouldWaitUntilCommit = shouldWaitUntilCommit
 			self.shouldChange = shouldChange
+            self.hasBorder = hasBorder
             self.minHeight = minHeight
             
             _height = height
@@ -210,6 +213,7 @@ public struct TextView: View {
 	private let isUserInteractionEnabled: Bool
 	private let shouldWaitUntilCommit: Bool
 	private let shouldChange: ShouldChangeHandler?
+    private let hasBorder: Bool
     private let minHeight: CGFloat
     @State private var height: CGFloat = 100
 	
@@ -238,6 +242,7 @@ public struct TextView: View {
 		isUserInteractionEnabled: Bool = true,
 		shouldWaitUntilCommit: Bool = true,
 		shouldChange: ShouldChangeHandler? = nil,
+        hasBorder: Bool = true,
         minHeight: CGFloat = 100
 	) {
 		_text = text
@@ -265,6 +270,7 @@ public struct TextView: View {
 		self.isUserInteractionEnabled = isUserInteractionEnabled
 		self.shouldWaitUntilCommit = shouldWaitUntilCommit
 		self.shouldChange = shouldChange
+        self.hasBorder = hasBorder
         self.minHeight = minHeight
 	}
 	
@@ -293,6 +299,7 @@ public struct TextView: View {
 			isUserInteractionEnabled: isUserInteractionEnabled,
 			shouldWaitUntilCommit: shouldWaitUntilCommit,
 			shouldChange: shouldChange,
+            hasBorder: hasBorder,
             minHeight: minHeight,
             height: $height
 		)
@@ -301,20 +308,15 @@ public struct TextView: View {
     private var borderColor: Color {
         return self.isEditing ? Color(hue: 0, saturation: 0, brightness: 0.05) : Color(hue: 0, saturation: 0, brightness: 0.75)
     }
+    
+    private var borderLineWidth: CGFloat {
+        return hasBorder ? 2 : 0
+    }
 	
 	public var body: some View {
 		GeometryReader { geometry in
 			ZStack {
 				self.representable
-                    .frame(minWidth: geometry.size.width,
-                           maxWidth: geometry.size.width,
-                           minHeight: self.height,
-                           maxHeight: self.height)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 5)
-                            .stroke(self.borderColor, lineWidth: 2)
-                    )
-                    
                 
 				self._placeholder.map { placeholder in
 					Text(placeholder)
@@ -334,7 +336,12 @@ public struct TextView: View {
 						}
 				}
 			}
-		}.frame(minHeight: self.height)
+		}
+        .frame(minHeight: self.height)
+        .overlay(
+            RoundedRectangle(cornerRadius: 5)
+                .stroke(self.borderColor, lineWidth: self.borderLineWidth)
+        )
 	}
 }
 
