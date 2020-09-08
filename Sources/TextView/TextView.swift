@@ -162,7 +162,6 @@ public struct TextView: View {
 			}
 		}
         
-        // Source: https://stackoverflow.com/questions/56471973/how-do-i-create-a-multiline-textfield-in-swiftui
         
         fileprivate func recalculateHeight(view: UIView, result: Binding<CGFloat>) {
             print("Current height: \(height)")
@@ -172,6 +171,7 @@ public struct TextView: View {
                     result.wrappedValue = newHeight // !! must be called asynchronously
                 }
             }
+            // Source: https://stackoverflow.com/questions/56471973/how-do-i-create-a-multiline-textfield-in-swiftui
         }
 	}
     
@@ -211,18 +211,18 @@ public struct TextView: View {
 	private let shouldWaitUntilCommit: Bool
 	private let shouldChange: ShouldChangeHandler?
     private let minHeight: CGFloat
-    @State private var height: CGFloat = 50
+    @State private var height: CGFloat = 100
 	
 	public init(
 		text: Binding<String>,
 		isEditing: Binding<Bool>,
 		placeholder: String? = nil,
 		textAlignment: TextAlignment = .left,
-		textHorizontalPadding: CGFloat = 0,
-		textVerticalPadding: CGFloat = 7,
+        textHorizontalPadding: CGFloat = 10,
+		textVerticalPadding: CGFloat = 15,
 		placeholderAlignment: Alignment = .topLeading,
-		placeholderHorizontalPadding: CGFloat = 4.5,
-		placeholderVerticalPadding: CGFloat = 7,
+        placeholderHorizontalPadding: CGFloat = 15,
+        placeholderVerticalPadding: CGFloat = 15,
 		font: UIFont = Self.defaultFont,
 		textColor: UIColor = .label,
 		placeholderColor: Color = .init(.placeholderText),
@@ -238,7 +238,7 @@ public struct TextView: View {
 		isUserInteractionEnabled: Bool = true,
 		shouldWaitUntilCommit: Bool = true,
 		shouldChange: ShouldChangeHandler? = nil,
-        minHeight: CGFloat = 50
+        minHeight: CGFloat = 100
 	) {
 		_text = text
 		_isEditing = isEditing
@@ -266,9 +266,6 @@ public struct TextView: View {
 		self.shouldWaitUntilCommit = shouldWaitUntilCommit
 		self.shouldChange = shouldChange
         self.minHeight = minHeight
-        self.height = 1000
-        print("We set height to: \(minHeight)")
-        print("Height at initialization: \(self.height)")
 	}
 	
 	private var _placeholder: String? {
@@ -300,6 +297,10 @@ public struct TextView: View {
             height: $height
 		)
 	}
+    
+    private var borderColor: Color {
+        return self.isEditing ? Color(hue: 0, saturation: 0, brightness: 0.05) : Color(hue: 0, saturation: 0, brightness: 0.75)
+    }
 	
 	public var body: some View {
 		GeometryReader { geometry in
@@ -309,6 +310,11 @@ public struct TextView: View {
                            maxWidth: geometry.size.width,
                            minHeight: self.height,
                            maxHeight: self.height)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(self.borderColor, lineWidth: 2)
+                    )
+                    
                 
 				self._placeholder.map { placeholder in
 					Text(placeholder)
@@ -328,37 +334,8 @@ public struct TextView: View {
 						}
 				}
 			}
-		}
+		}.frame(minHeight: self.height)
 	}
 }
 
 #endif
-
-
-struct FeedbackInput: View {
-    @Binding var feedback: String
-    var placeholder: String
-    @Binding var active: Bool
-    
-    
-    
-    var body: some View {
-        TextView(text: self.$feedback,
-                 isEditing: self.$active,
-                 placeholder: self.placeholder,
-                 font: UIFont(name: "Nunito-Regular", size: 16)!,
-                 backgroundColor: UIColor.gray,
-                 minHeight: 100)
-            .onTapGesture { self.active.toggle() }
-        
-    }
-}
-
-struct FeedbackInput_Previews: PreviewProvider {
-    @State static var feedback = "Super long multiline input font that should wrap when it gets to the edge of the page and if it doesn't then something is wrong"
-    @State static var active = false
-    
-    static var previews: some View {
-        FeedbackInput(feedback: $feedback, placeholder: "How can we improve?", active: $active)
-    }
-}
